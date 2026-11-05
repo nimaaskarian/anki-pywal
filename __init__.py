@@ -242,15 +242,27 @@ def apply_palette():
     mw.app.setStyleSheet(out + "\n" + MARK)
 
 
-def apply(*_):
-    if not _c:
-        return
-    apply_palette()
-    js = (
+def style_js():
+    return (
         "(()=>{let s=document.getElementById('theme-sync');"
         "if(!s){s=document.createElement('style');s.id='theme-sync';document.head.appendChild(s)}"
         f"s.textContent={json.dumps(css())}}})()"
     )
+
+
+def inject(w):
+    if _c:
+        w.eval(style_js())
+
+
+gui_hooks.webview_did_inject_style_into_page.append(inject)
+
+
+def apply(*_):
+    if not _c:
+        return
+    apply_palette()
+    js = style_js()
     for w in mw.app.allWidgets():
         if isinstance(w, AnkiWebView):
             w.eval(js)
