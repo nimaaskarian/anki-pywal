@@ -45,28 +45,111 @@ def load():
 MARK = "/*theme_sync*/"
 
 
+def rgbs(col):
+    q = QColor(col)
+    return f"{q.red()}, {q.green()}, {q.blue()}"
+
+
+def bs_css():
+    c = _c
+    hi = mix(c["accent"], c["fg"], 0.15).name()
+    hover = mix(c["elev"], c["fg"], 0.08).name()
+    v = {
+        "bs-body-color": c["fg"],
+        "bs-body-bg": c["bg"],
+        "bs-emphasis-color": c["fg"],
+        "bs-heading-color": c["fg"],
+        "bs-secondary-color": c["subtle"],
+        "bs-tertiary-color": c["faint"],
+        "bs-secondary-bg": c["elev"],
+        "bs-tertiary-bg": c["inset"],
+        "bs-border-color": c["border"],
+        "bs-border-color-translucent": c["border"],
+        "border-color": c["border"],
+        "bs-link-color": c["accent"],
+        "bs-link-hover-color": hi,
+        "bs-primary": c["accent"],
+        "bs-code-color": c["accent"],
+        "bs-highlight-bg": c["select"],
+        "bs-highlight-color": c["fg"],
+        "bs-tooltip-bg": c["elev"],
+        "bs-tooltip-color": c["fg"],
+        "bs-white": c["fg"],
+        "bs-black": c["bg"],
+    }
+    for k in (
+        "body-color",
+        "body-bg",
+        "emphasis-color",
+        "secondary-bg",
+        "tertiary-bg",
+        "link-color",
+        "primary",
+    ):
+        v[f"bs-{k}-rgb"] = rgbs(v[f"bs-{k}"])
+    for n, t in zip(
+        range(100, 1000, 100), (0, 0.1, 0.25, 0.4, 0.55, 0.7, 0.8, 0.9, 0.95)
+    ):
+        v[f"bs-gray-{n}"] = mix(c["fg"], c["bg"], t).name()
+    out = "".join(f"--{k}:{x} !important;" for k, x in v.items())
+    btn = (
+        f"--bs-btn-color:{c['fg']} !important;--bs-btn-bg:{c['elev']} !important;"
+        f"--bs-btn-border-color:{c['border']} !important;"
+        f"--bs-btn-hover-color:{c['fg']} !important;--bs-btn-hover-bg:{hover} !important;"
+        f"--bs-btn-hover-border-color:{c['border']} !important;"
+        f"--bs-btn-active-color:{c['fg']} !important;--bs-btn-active-bg:{c['select']} !important;"
+        f"--bs-btn-disabled-color:{c['faint']} !important;--bs-btn-disabled-bg:{c['inset']} !important;"
+    )
+    return (
+        ":root, body, .night-mode {" + out + "}"
+        ".btn, .dropdown-item {" + btn + "}"
+        f".dropdown-menu {{ background:{c['elev']} !important; color:{c['fg']} !important; }}"
+    )
+
+
 def css():
     c = _c
+    hover = mix(c["elev"], c["fg"], 0.08).name()
+    hi = mix(c["accent"], c["fg"], 0.15).name()
+    sb_h = mix(c["border"], c["fg"], 0.15).name()
+    sb_a = mix(c["border"], c["fg"], 0.3).name()
+    prim_dis = mix(c["accent"], c["bg"], 0.5).name()
     v = {
         "canvas": c["bg"],
         "canvas-elevated": c["elev"],
         "canvas-inset": c["inset"],
+        "canvas-overlay": c["elev"],
+        "canvas-glass": c["elev"],
+        "canvas-code": c["inset"],
         "fg": c["fg"],
         "fg-subtle": c["subtle"],
         "fg-faint": c["faint"],
+        "fg-disabled": c["faint"],
+        "fg-link": c["accent"],
         "border": c["border"],
         "border-subtle": c["border"],
+        "border-strong": c["border"],
+        "border-focus": c["accent"],
+        "focus-color": c["accent"],
         "button-bg": c["elev"],
-        "button-gradient-start": c["elev"],
+        "button-gradient-start": hover,
         "button-gradient-end": c["elev"],
+        "button-hover-border": c["border"],
         "button-disabled": c["inset"],
+        "button-primary-bg": c["accent"],
+        "button-primary-gradient-start": hi,
+        "button-primary-gradient-end": c["accent"],
+        "button-primary-disabled": prim_dis,
+        "scrollbar-bg": c["border"],
+        "scrollbar-bg-hover": sb_h,
+        "scrollbar-bg-active": sb_a,
         "highlight-bg": c["select"],
         "highlight-fg": c["fg"],
         "selected-bg": c["select"],
         "selected-fg": c["fg"],
     }
-    body = "".join(f"--{k}:{x};" for k, x in v.items())
-    return ":root, :root.night-mode {" + body + "}"
+    body = "".join(f"--{k}:{x} !important;" for k, x in v.items())
+    return ":root, body, .night-mode {" + body + "}" + bs_css()
 
 
 def qss():
@@ -92,6 +175,7 @@ QMenu {{ background:{c['elev']}; color:{c['fg']}; }}
 QMenu::item:selected {{ background:{c['select']}; }}
 QToolTip {{ background:{c['elev']}; color:{c['fg']}; border:1px solid {c['border']}; }}
 """
+
 
 _orig = None
 
@@ -133,12 +217,19 @@ def apply_palette():
     R = QPalette.ColorRole
     p = QPalette()
     for role, col in [
-        (R.Window, c["bg"]), (R.WindowText, c["fg"]),
-        (R.Base, c["elev"]), (R.AlternateBase, c["bg"]),
-        (R.Text, c["fg"]), (R.Button, c["elev"]), (R.ButtonText, c["fg"]),
-        (R.ToolTipBase, c["elev"]), (R.ToolTipText, c["fg"]),
-        (R.PlaceholderText, c["faint"]), (R.Link, c["fg"]),
-        (R.Highlight, c["select"]), (R.HighlightedText, c["fg"]),
+        (R.Window, c["bg"]),
+        (R.WindowText, c["fg"]),
+        (R.Base, c["elev"]),
+        (R.AlternateBase, c["bg"]),
+        (R.Text, c["fg"]),
+        (R.Button, c["elev"]),
+        (R.ButtonText, c["fg"]),
+        (R.ToolTipBase, c["elev"]),
+        (R.ToolTipText, c["fg"]),
+        (R.PlaceholderText, c["faint"]),
+        (R.Link, c["fg"]),
+        (R.Highlight, c["select"]),
+        (R.HighlightedText, c["fg"]),
     ]:
         p.setColor(role, QColor(col))
     mw.app.setPalette(p)
@@ -149,6 +240,7 @@ def apply_palette():
     base = _orig or ""
     out = recolor(base) if "QGroupBox" in base else base + qss()
     mw.app.setStyleSheet(out + "\n" + MARK)
+
 
 def apply(*_):
     if not _c:
