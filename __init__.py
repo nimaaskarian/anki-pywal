@@ -211,6 +211,21 @@ def recolor(sheet):
     return sheet
 
 
+def menu_qss():
+    c = _c
+    return f"""
+QMenuBar {{ background:{c['bg']}; color:{c['fg']}; border-bottom:1px solid {c['border']}; }}
+QMenuBar::item {{ background:transparent; color:{c['fg']}; }}
+QMenuBar::item:selected {{ background:{c['select']}; color:{c['fg']}; }}
+QMenu {{ background:{c['elev']}; color:{c['fg']}; border:1px solid {c['border']}; }}
+QMenu::item {{ background:transparent; color:{c['fg']}; }}
+QMenu::item:selected {{ background:{c['select']}; color:{c['fg']}; }}
+QMenu::item:disabled {{ color:{c['faint']}; }}
+QMenu::separator {{ background:{c['border']}; }}
+QMenu::indicator {{ background:{c['elev']}; border:1px solid {c['border']}; }}
+"""
+
+
 def apply_palette():
     global _orig
     c = _c
@@ -239,7 +254,7 @@ def apply_palette():
         _orig = sheet
     base = _orig or ""
     out = recolor(base) if "QGroupBox" in base else base + qss()
-    mw.app.setStyleSheet(out + "\n" + MARK)
+    mw.app.setStyleSheet(out + "\n" + menu_qss() + "\n" + MARK)
 
 
 def style_js():
